@@ -15,6 +15,7 @@
 #    limitations under the License.
 
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
 
 class InvestmentTrustSiteHandler(object):
@@ -25,12 +26,16 @@ class InvestmentTrustSiteHandler(object):
     :param browser webdriver.WebDriver: WebDriver instance
     :param data dict: data storage
     """
-    def __init__(self, url):
-        self.browser = webdriver.Chrome()
+
+    def __init__(self, url, headless: bool = False):
+        options = Options()
+        options.headless = headless
+        self.browser = webdriver.Chrome(options=options)
         self.browser.get(url)
-        self.data = {}
+        self.data = None
 
     def close(self):
         """ close closes WebDriver instance
         """
         self.browser.close()
+        self.browser.quit()
