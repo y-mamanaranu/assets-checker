@@ -82,3 +82,9 @@ Handle numbers with currency units.
 * [python:keyringによるパスワード管理 - Qiita](https://qiita.com/hidelafoglia/items/cf84870dd7939524e3e9)
 * [【Python入門】プログラミングで自分だけの株価データを手に入れよう | CodeCampus](https://blog.codecamp.jp/programming-python-stockprice)
 * [PythonでSBI証券に自動ログインして株価チェックする（Mechanize編） | ねほり.com](https://nehori.com/nikki/2020/08/25/post-18003/)
+
+## LICENSE
+Copyright 2017 Yoshi Yamaguchi<br/>
+Copyright 2022 Yoiduki \<y-muen\>
+
+Licensed under the Apache License, Version 2.0 (the "License")
