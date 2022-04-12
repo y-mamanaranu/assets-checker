@@ -1,5 +1,5 @@
 # Assets Checker
-Aquire assets data from brokerage accounts.
+Aquire assets data from brokerage accounts in JP.
 
 ## Usage
 ### SBI
