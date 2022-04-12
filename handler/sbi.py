@@ -29,20 +29,19 @@ class SBIHandler(InvestmentTrustSiteHandler):
         "cat2" : "none",
         "getFlg" : "on"
     })
-    __baseurl = "https://site3.sbisec.co.jp/ETGate/"
+    __url_home = "https://site3.sbisec.co.jp/ETGate/"
     
-    def __init__(self, options=None):
+    def __init__(self, options:Options=None):
         options = options or Options()
         options.headless = False
-        
         super().__init__(
-            self.__baseurl, 
             options=options
         )
                 
         self.login_check()
     
     def login_check(self):
+        self.browser.get(self.__url_home)
         html = self.browser.page_source
         soup = BeautifulSoup(html, 'html.parser')
 

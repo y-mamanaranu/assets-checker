@@ -27,10 +27,8 @@ class InvestmentTrustSiteHandler(object):
     :param data dict: data storage
     """
 
-    def __init__(self, url, options:Options=None):
+    def __init__(self, options:Options=None):
         self.browser = webdriver.Chrome(options=options)
-        self.browser.get(url)
-        self.data = None
 
     def close(self):
         """ close closes WebDriver instance
