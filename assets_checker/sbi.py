@@ -5,7 +5,7 @@ import urllib
 import pandas as pd
 from bs4 import BeautifulSoup
 
-from handler.handler import InvestmentTrustSiteHandler
+from .handler import InvestmentTrustSiteHandler
 
 class SBIHandler(InvestmentTrustSiteHandler):
     """ SBIHandler is a handler for SBI

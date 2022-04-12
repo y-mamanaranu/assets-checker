@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 import time
 import numpy as np
 
-from handler.handler import InvestmentTrustSiteHandler
+from .handler import InvestmentTrustSiteHandler
 
 class MonexHandler(InvestmentTrustSiteHandler):
     """ MonexHandler is a handler for Monex

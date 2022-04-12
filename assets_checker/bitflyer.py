@@ -5,7 +5,7 @@ import pandas as pd
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 
-from handler.handler import InvestmentTrustSiteHandler
+from .handler import InvestmentTrustSiteHandler
 
 class bitFlyerHandler(InvestmentTrustSiteHandler):
     """ bitFlyerHandler is a handler for bitFlyer
