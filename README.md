@@ -62,7 +62,7 @@ Handle numbers with currency units.
 * Python configuration file.
 
 ## Forked from
-* (ymotongpoo/parvenu)[https://github.com/ymotongpoo/parvenu]
+* [ymotongpoo/parvenu](https://github.com/ymotongpoo/parvenu)
 
 ## See Also
 * [python:keyringによるパスワード管理 - Qiita](https://qiita.com/hidelafoglia/items/cf84870dd7939524e3e9)
