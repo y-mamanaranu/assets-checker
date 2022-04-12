@@ -1,124 +1,153 @@
 """ for SBI
 """
-#    Copyright 2017 Yoshi Yamaguchi
-# 
-#    Licensed under the Apache License, Version 2.0 (the "License");
-#    you may not use this file except in compliance with the License.
-#    You may obtain a copy of the License at
-# 
-#        http://www.apache.org/licenses/LICENSE-2.0
-# 
-#    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS,
-#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    See the License for the specific language governing permissions and
-#    limitations under the License.
-
-from time import sleep
-
-from selenium.common.exceptions import NoSuchElementException
-from selenium.webdriver.support.ui import Select
+from selenium.webdriver.chrome.options import Options
+import urllib
+import pandas as pd
+from bs4 import BeautifulSoup
 
 from handler.handler import InvestmentTrustSiteHandler
-
 
 class SBIHandler(InvestmentTrustSiteHandler):
     """ SBIHandler is a handler for SBI
     """
-
-    def __init__(self):
-        self.baseurl = "https://site0.sbisec.co.jp/marble/fund/powersearch/fundpsearch.do"
-        super().__init__(self.baseurl)
-
-    def fetch_all(self):
-        result = []
-
-        select = Select(self.browser.find_element_by_id('pageRowsInput'))
-        select.select_by_value('100')
-        sleep(2)
-
-        elems = self.browser.find_elements_by_class_name("fundDetail")
-        for e in elems:
-            result.append(
-                {
-                    'url': e.get_attribute('href'),
-                    'name': e.text.strip(),
-                }
-            )
-
-        while(True):
-            try:
-                pager = self.browser.find_element_by_link_text('次へ→')
-                pager.click()
-                sleep(5)
-
-                elems = self.browser.find_elements_by_class_name('fundDetail')
-                for e in elems:
-                    result.append(
-                        {
-                            'url': e.get_attribute('href'),
-                            'name': e.text.strip(),
-                        }
-                    )
-            except NoSuchElementException:
-                break
-
-        return result
-
-    def open_and_fetch_detail(self, url):
-        """ open_and_fetch_detail open url in browser and fetch
-        investment trust fund detailed data from the page
-
-        :param url str: URL of the page
-        :rtype: fund data
-        """
-
-        self.browser.get(url)
-        sleep(2)
-        result = {}
+    
+    __url_domestic = "https://site3.sbisec.co.jp/ETGate/?" + urllib.parse.urlencode({
+        "_ControlID": "WPLETacR001Control",
+        "_PageID": "DefaultPID",
+        "_DataStoreID": "DSWPLETacR001Control",
+        "_SeqNo": "1649728758632_default_task_354_DefaultPID_DefaultAID",
+        "getFlg": "on",
+        "_ActionID": "DefaultAID"
+    })
+    __url_foreign = "https://site3.sbisec.co.jp/ETGate/?" + urllib.parse.urlencode({
+        "_ControlID" : "WPLETsmR001Control",
+        "_DataStoreID" : "DSWPLETsmR001Control",
+        "_PageID" : "WPLETsmR001Sdtl12",
+        "sw_page" : "BondFx",
+        "sw_param2" : "02_201",
+        "cat1" : "home",
+        "cat2" : "none",
+        "getFlg" : "on"
+    })
+    __baseurl = "https://site3.sbisec.co.jp/ETGate/"
+    
+    def __init__(self, options=None):
+        options = options or Options()
+        options.headless = False
         
-        elems = self.browser.find_elements_by_tag_name('h3')
-        name = elems[0].text.strip()           # 商品名
+        super().__init__(
+            self.__baseurl, 
+            options=options
+        )
+        
+        self.JPY = 0
+        
+        # login check
+        html = self.browser.page_source
+        soup = BeautifulSoup(html, 'html.parser')
+        if soup.find(class_="login_title"):
+            self.prompt_login()
+    
+    def prompt_login(self):
+        input("Please login and press Key")
+        
+    def update(self):
+        self.__update_domestic()
+        self.__update_foreign()
+    
+    def __update_domestic(self):
+        self.browser.get(self.__url_domestic)
+        
+        html = self.browser.page_source
+        soup = BeautifulSoup(html, 'html.parser')
+        
+        res = soup.find_all(text="株式（現物/特定預り）")[0]
+        res = res.find_parents("table")[0]
 
-        elems = self.browser.find_elements_by_css_selector('.floatL .fl01')
-        morning_star_category = elems[3].text  # モーニングスターカテゴリ
+        df, = pd.read_html(str(res), header=[1])
 
-        elems = self.browser.find_elements_by_css_selector('table.md-l-table-01.has_tooltip.col1.md-l-utl-mt10')
-        elems = elems[0].find_elements_by_tag_name('tr')
-        strategy = elems[1].text.strip()    # 運用方針
-        benchmark = elems[3].text           # ベンチマーク
-        category = elems[5].text            # 商品分類
-        association_code = elems[7].text    # 協会コード
-        buying_commition = elems[9].find_elements_by_class_name('active')[0].text.strip() # 買付手数料
-        custodian_fee = elems[12].text      # 信託報酬
-        assets_retained = elems[14].text    # 信託財産留保額
-        back_end_load = elems[16].text      # 解約手数料
-        closing_date = elems[22].text       # 決算日
-        closing_frequency = elems[24].text  # 決算頻度
-        start_date = elems[40].text         # 設定日
+        df1 = df[::2].copy()
+        df1 = df1["保有株数"].str.split('\xa0', expand=True)
+        df1 = df1.rename(columns={0: "ticker", 1: "name"})
+        df1 = df1.reset_index()
+        del df1["index"]
 
-        elems = self.browser.find_elements_by_css_selector('table.md-l-table-01.has_tooltip.lower')
-        elems = elems[0].find_elements_by_tag_name('td')
-        net_asset = elems[0].text           # 純資産
+        df2 = df[1::2][["保有株数", "取得単価", "現在値"]].copy()
+        df2 = df2.rename(columns={
+            "保有株数": "amount", 
+            "取得単価": "acquisition", 
+            "現在値": "price"
+        })
+        df2 = df2.reset_index()
+        del df2["index"]
 
-        elem = self.browser.find_element_by_link_text('目論見書')
-        prospectus = elem.get_attribute('href')
+        self.df_domestic = df1.join(df2)
+        
+        res = soup.find_all(text="買付余力")[0]
+        res = res.find_parents("table")[0]
 
-        return {
-            'name': name,
-            'url': url,
-            'morning_star_category': morning_star_category,
-            'strategy': strategy,
-            'benchmark': benchmark,
-            'category': category,
-            'association_code': association_code,
-            'buying_commition': buying_commition,
-            'custodian_fee': custodian_fee,
-            'assets_retained': assets_retained,
-            'back_end_load': back_end_load,
-            'closing_date': closing_date,
-            'closing_frequency': closing_frequency,
-            'start_date': start_date,
-            'net_asset': net_asset,
-            'prospectus': prospectus,
-        }
+        df, _ = pd.read_html(str(res))
+
+        self.JPY = df.iat[-1, -1]
+    
+    def __update_foreign(self):
+        self.browser.get(self.__url_foreign)
+        
+        html = self.browser.page_source
+        soup = BeautifulSoup(html, 'html.parser')
+        
+        # US Stock
+        res = soup.find_all(text="米国株式（現物/NISA預り）")[0]
+        res = res.find_parents("table")[0]
+        text = ""
+        while len(text) == 0:
+            res = res.next_sibling
+            text = res.text.strip()
+            
+        df, = pd.read_html(str(res), header=[0])
+        
+        df1 = df[0::2]["保有数量"].copy()
+        df1 = df1.str.split('\xa0', expand=True)
+        df1 = df1.rename(columns={
+            0: 'name', 
+            1: 'ticker'
+        })
+        df1 = df1.reset_index()
+        del df1["index"]
+        
+        df2 = df[1::2][['保有数量', '取得単価', '現在値']].copy()
+        df2 = df2.rename(columns={
+            '保有数量': 'amount',
+            '取得単価': 'acquisition',
+            '現在値': 'price',
+        })
+        df2 = df2.reset_index()
+        del df2["index"]
+        
+        self.df_foreign = df1.join(df2)
+                
+        # Currency
+        res = soup.find_all(text="参考為替レート")[0]
+        res = res.find_parents("table")[0]
+
+        df, = pd.read_html(str(res), header=[0])
+
+        df1 = df[["参考為替レート", "参考為替レート.1"]].rename(columns={"参考為替レート": "name", "参考為替レート.1": "price"})
+        df1["name"] = df1["name"].str.extract('(.+)/.+', expand=True)
+
+        res = soup.find_all(text="買付余力")[0]
+        res = res.find_parents("table")[0]
+
+        df, = pd.read_html(str(res), header=[0])
+
+        df2 = df[["|買付余力", "|買付余力.2"]].rename(columns={"|買付余力": "name", "|買付余力.2": "amount"})[:-1]
+        df2[["name", "ticker"]] = df2["name"].str.extract('(.+)\((.+)\)', expand=True)
+
+        df = pd.merge(df1, df2)
+
+        new = pd.DataFrame([["円", 1, self.JPY, "JPY"]], columns=df.columns)
+        df = pd.concat([df, new])
+        df = df.reset_index()
+        del df["index"]
+        
+        self.df_currency = df
