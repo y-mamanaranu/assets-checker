@@ -12,66 +12,66 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import pickle
-from csv import DictWriter
-from time import sleep
+# import pickle
+# from csv import DictWriter
+# from time import sleep
 
-from tqdm import tqdm
+# from tqdm import tqdm
 
-from handler.sbi import SBIHandler
-from handler.monex import RakutenHandler
+# from handler.sbi import SBIHandler
+# from handler.monex import RakutenHandler
 
-def dump(filepath, data):
-    """ dump write down all data into filepath as csv
-    :param filepath str: CSV target filepath
-    :param data list: list of dict data
-    """
-    with open(filepath, 'w') as f:
-        writer = DictWriter(f, fieldnames=data[0].keys())
-        writer.writeheader()
-        writer.writerows(data)
-
-
-def sbi():
-    handler = SBIHandler()
-    try:
-        all_items = handler.fetch_all()
-        results = []
-        for i in tqdm(all_items):
-            result = handler.open_and_fetch_detail(i['url'])
-            results.append(result)
-            sleep(3)
-        with open("sbi.pickle", mode="wb") as p:
-            pickle.dump(results, p)
-        dump("sbi.csv", results)
-    except AttributeError as e:
-        raise e
-    except IndexError as e:
-        raise e
-    finally:
-        handler.close()
+# def dump(filepath, data):
+#     """ dump write down all data into filepath as csv
+#     :param filepath str: CSV target filepath
+#     :param data list: list of dict data
+#     """
+#     with open(filepath, 'w') as f:
+#         writer = DictWriter(f, fieldnames=data[0].keys())
+#         writer.writeheader()
+#         writer.writerows(data)
 
 
-def rakuten():
-    handler = RakutenHandler()
-    try:
-        all_items = handler.fetch_all()
-        results = []
-        for i in tqdm(all_items):
-            result = handler.open_and_fetch_detail(i['url'])
-            results.append(result)
-            sleep(3)
-        with open("rakuten.pickle", mode='wb') as p:
-            pickle.dump(results, p)
-        dump("rakuten.csv", results)
+# def sbi():
+#     handler = SBIHandler()
+#     try:
+#         all_items = handler.fetch_all()
+#         results = []
+#         for i in tqdm(all_items):
+#             result = handler.open_and_fetch_detail(i['url'])
+#             results.append(result)
+#             sleep(3)
+#         with open("sbi.pickle", mode="wb") as p:
+#             pickle.dump(results, p)
+#         dump("sbi.csv", results)
+#     except AttributeError as e:
+#         raise e
+#     except IndexError as e:
+#         raise e
+#     finally:
+#         handler.close()
 
-    except TypeError as e:
-        raise e
-    finally:
-        handler.close()
 
-def main():
-    rakuten()
+# def rakuten():
+#     handler = RakutenHandler()
+#     try:
+#         all_items = handler.fetch_all()
+#         results = []
+#         for i in tqdm(all_items):
+#             result = handler.open_and_fetch_detail(i['url'])
+#             results.append(result)
+#             sleep(3)
+#         with open("rakuten.pickle", mode='wb') as p:
+#             pickle.dump(results, p)
+#         dump("rakuten.csv", results)
 
-if __name__ == '__main__':
-    main()
+#     except TypeError as e:
+#         raise e
+#     finally:
+#         handler.close()
+
+# def main():
+#     rakuten()
+
+# if __name__ == '__main__':
+#     main()

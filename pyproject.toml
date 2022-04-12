@@ -3,6 +3,7 @@ name = "assets-checker"
 version = "1.0.0"
 description = ""
 authors = ["Yoiduki <90896806+y-muen@users.noreply.github.com>"]
+license = "Apache-2.0"
 
 [tool.poetry.dependencies]
 python = "^3.10"
