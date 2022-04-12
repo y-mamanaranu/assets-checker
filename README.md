@@ -1,6 +1,41 @@
 # Assets Checker
 Aquire assets data from brokerage accounts.
 
+## Usage
+### SBI
+For SBI
+```
+handler = SBIHandler()
+handler.update()
+handler.close()
+
+handler.df_domestic
+> DataFrame for Domestic Stock
+handler.df_foreign
+> DataFrame for Foreign Stock
+handler.df_currency
+> DataFrame for Currency
+```
+
+### Options
+If you use Chromium browser but not Chrome, use `binary_location`.
+```
+from selenium.webdriver.chrome.options import Options
+
+options = Options()
+options.binary_location = "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser"
+```
+
+If you use browser extentions, setting profile via `--user-data-dir` is covininet.
+```
+options.add_argument(f"--user-data-dir=/Users/USERNAME/.config/selenium/cache")
+```
+
+Pass the option at initialization.
+```
+handler = SBIHandler(options)
+```
+
 ## Expected User
 * SBI証券.
 * マネックス証券.
