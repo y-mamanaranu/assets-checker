@@ -39,30 +39,36 @@ class SBIHandler(InvestmentTrustSiteHandler):
             self.__baseurl, 
             options=options
         )
-        
-        self.JPY = 0
-        
-        # login check
+                
+        self.login_check()
+    
+    def login_check(self):
         html = self.browser.page_source
         soup = BeautifulSoup(html, 'html.parser')
+
         if soup.find(class_="login_title"):
-            self.prompt_login()
-    
-    def prompt_login(self):
-        input("Please login and press Key")
+            input("Please login and press Key")
         
     def update(self):
+        self.browser.get(self.__url_domestic)
+        html = self.browser.page_source
+        self.soup_domestic = BeautifulSoup(html, 'html.parser')
+
+        self.browser.get(self.__url_foreign)
+        html = self.browser.page_source
+        self.soup_foreign = BeautifulSoup(html, 'html.parser')
+
         self.__update_domestic()
         self.__update_foreign()
+        self.__update_currency()
     
     def __update_domestic(self):
-        self.browser.get(self.__url_domestic)
-        
-        html = self.browser.page_source
-        soup = BeautifulSoup(html, 'html.parser')
-        
-        res = soup.find_all(text="株式（現物/特定預り）")[0]
-        res = res.find_parents("table")[0]
+        res = self.soup_domestic.find_all(text="株式（現物/特定預り）")
+        if not res:
+            self.df_domestic = None
+            return
+            
+        res = res[0].find_parents("table")[0]
 
         df, = pd.read_html(str(res), header=[1])
 
@@ -82,23 +88,14 @@ class SBIHandler(InvestmentTrustSiteHandler):
         del df2["index"]
 
         self.df_domestic = df1.join(df2)
-        
-        res = soup.find_all(text="買付余力")[0]
-        res = res.find_parents("table")[0]
-
-        df, _ = pd.read_html(str(res))
-
-        self.JPY = df.iat[-1, -1]
     
     def __update_foreign(self):
-        self.browser.get(self.__url_foreign)
-        
-        html = self.browser.page_source
-        soup = BeautifulSoup(html, 'html.parser')
-        
-        # US Stock
-        res = soup.find_all(text="米国株式（現物/NISA預り）")[0]
-        res = res.find_parents("table")[0]
+        res = self.soup_foreign.find_all(text="米国株式（現物/NISA預り）")
+        if not res:
+            self.df_foreign = None
+            return
+
+        res = res[0].find_parents("table")[0]
         text = ""
         while len(text) == 0:
             res = res.next_sibling
@@ -125,9 +122,16 @@ class SBIHandler(InvestmentTrustSiteHandler):
         del df2["index"]
         
         self.df_foreign = df1.join(df2)
-                
-        # Currency
-        res = soup.find_all(text="参考為替レート")[0]
+
+    def __update_currency(self):
+        res = self.soup_domestic.find_all(text="買付余力")[0]
+        res = res.find_parents("table")[0]
+
+        df, _ = pd.read_html(str(res))
+
+        JPY = df.iat[-1, -1]
+
+        res = self.soup_foreign.find_all(text="参考為替レート")[0]
         res = res.find_parents("table")[0]
 
         df, = pd.read_html(str(res), header=[0])
@@ -135,7 +139,7 @@ class SBIHandler(InvestmentTrustSiteHandler):
         df1 = df[["参考為替レート", "参考為替レート.1"]].rename(columns={"参考為替レート": "name", "参考為替レート.1": "price"})
         df1["name"] = df1["name"].str.extract('(.+)/.+', expand=True)
 
-        res = soup.find_all(text="買付余力")[0]
+        res = self.soup_foreign.find_all(text="買付余力")[0]
         res = res.find_parents("table")[0]
 
         df, = pd.read_html(str(res), header=[0])
@@ -145,7 +149,7 @@ class SBIHandler(InvestmentTrustSiteHandler):
 
         df = pd.merge(df1, df2)
 
-        new = pd.DataFrame([["円", 1, self.JPY, "JPY"]], columns=df.columns)
+        new = pd.DataFrame([["円", 1, JPY, "JPY"]], columns=df.columns)
         df = pd.concat([df, new])
         df = df.reset_index()
         del df["index"]
