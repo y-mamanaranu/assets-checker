@@ -1,4 +1,8 @@
 # Change Log
+## 1.0.2 (2022/04/13)
+Fix bugs.
+* Resolve import error
+
 ## 1.0.1 (2022/04/13)
 Fix bugs.
 * Resolve conflicts with `poetry add asset-checker`
