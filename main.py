@@ -1,59 +1,77 @@
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import WebDriverWait
+#    Copyright 2017 Yoshi Yamaguchi
+#
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
 
-class SBIHandler:
-    URL = "https://site0.sbisec.co.jp/marble/fund/powersearch/fundpsearch.do"
+import pickle
+from csv import DictWriter
+from time import sleep
 
-    def __init__(self):
-        self.browser = webdriver.Chrome()
-        self.browser.get(self.URL)
+from tqdm import tqdm
 
-    def fetch_all(self):
-        result = []
+from handler.sbi import SBIHandler
+from handler.monex import RakutenHandler
 
-        elems = self.browser.find_elements_by_class_name("fundDetail")
-        for e in elems:
-            result.append(
-                {
-                    'url': e.get_attribute('href'),
-                    'name': e.text,
-                }
-            )
+def dump(filepath, data):
+    """ dump write down all data into filepath as csv
+    :param filepath str: CSV target filepath
+    :param data list: list of dict data
+    """
+    with open(filepath, 'w') as f:
+        writer = DictWriter(f, fieldnames=data[0].keys())
+        writer.writeheader()
+        writer.writerows(data)
 
-        while(True):
-            pager = self.browser.find_element_by_link_text('次へ→')
-            if pager is None:
-                break;
-            pager.click()
 
-            # marker = WebDriverWait(self.browser, 3).until(lambda x: x.find_element_by_class_name('md-l-table-01-fund'))
-            marker = WebDriverWait(self.browser, 3).until(lambda x: x.find_elements_by_class_name('md-l-tr-03'))
+def sbi():
+    handler = SBIHandler()
+    try:
+        all_items = handler.fetch_all()
+        results = []
+        for i in tqdm(all_items):
+            result = handler.open_and_fetch_detail(i['url'])
+            results.append(result)
+            sleep(3)
+        with open("sbi.pickle", mode="wb") as p:
+            pickle.dump(results, p)
+        dump("sbi.csv", results)
+    except AttributeError as e:
+        raise e
+    except IndexError as e:
+        raise e
+    finally:
+        handler.close()
 
-            elems = self.browser.find_elements_by_class_name('fundDetail')
-            for e in elems:
-                result.append(
-                    {
-                        'url': e.get_attribute('href'),
-                        'name': e.text,
-                    }
-                )
 
-        return result
+def rakuten():
+    handler = RakutenHandler()
+    try:
+        all_items = handler.fetch_all()
+        results = []
+        for i in tqdm(all_items):
+            result = handler.open_and_fetch_detail(i['url'])
+            results.append(result)
+            sleep(3)
+        with open("rakuten.pickle", mode='wb') as p:
+            pickle.dump(results, p)
+        dump("rakuten.csv", results)
 
-    def open_and_fetch_detail(self, url):
-        pass
-
-    def close(self):
-        self.browser.close()
-
+    except TypeError as e:
+        raise e
+    finally:
+        handler.close()
 
 def main():
-    handler = SBIHandler()
-    result = handler.fetch_all()
-    print(result)
-    handler.close()
-
+    rakuten()
 
 if __name__ == '__main__':
     main()
