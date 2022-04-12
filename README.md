@@ -17,6 +17,18 @@ handler.df_currency
 > DataFrame for Currency
 ```
 
+### bitFlyer
+For bitFlyer
+Before you run this code, you have to acquire `api_key` and `api_secret` from [bitFlyer Lightning API](https://lightning.bitflyer.com/docs?lang=ja&_gl=1*t1rrjv*_ga*NzU1MzkzODkzLjE2NDg3OTU3MTg.*_ga_3VYMQNCVSM*MTY0OTc1Njc5OC40LjEuMTY0OTc1ODI0OS41MA..).
+Check `資産残高を取得` and `証拠金の状態を取得` in allowance page.
+```
+bitFlyer = bitFlyerHandler()
+bitFlyer.update(api_key, api_secret)
+bitFlyer.close()
+bitFlyer.df
+> DataFrame for All
+```
+
 ### Options
 If you use Chromium browser but not Chrome, use `binary_location`.
 ```
