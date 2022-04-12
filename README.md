@@ -53,7 +53,7 @@ handler = SBIHandler(options)
 * [ ] マネックス証券.
 * [ ] 楽天証券.
 * [x] bitFlyer.
-* [ ]Coincheck.
+* [ ] Coincheck.
 
 ## File IO
 Handle numbers with currency units.
