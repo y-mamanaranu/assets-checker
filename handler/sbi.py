@@ -58,9 +58,9 @@ class SBIHandler(InvestmentTrustSiteHandler):
         html = self.browser.page_source
         self.soup_foreign = BeautifulSoup(html, 'html.parser')
 
+        self.__update_currency() # 円換算があるので最初
         self.__update_domestic()
         self.__update_foreign()
-        self.__update_currency()
     
     def __update_domestic(self):
         res = self.soup_domestic.find_all(text="株式（現物/特定預り）")
@@ -86,8 +86,11 @@ class SBIHandler(InvestmentTrustSiteHandler):
         })
         df2 = df2.reset_index()
         del df2["index"]
-
-        self.df_domestic = df1.join(df2)
+        
+        df = df1.join(df2)
+        df = df.apply(pd.to_numeric, errors="ignore")
+        df["valuation"] = df.amount * df.price
+        self.df_domestic = df
     
     def __update_foreign(self):
         res = self.soup_foreign.find_all(text="米国株式（現物/NISA預り）")
@@ -115,13 +118,17 @@ class SBIHandler(InvestmentTrustSiteHandler):
         df2 = df[1::2][['保有数量', '取得単価', '現在値']].copy()
         df2 = df2.rename(columns={
             '保有数量': 'amount',
-            '取得単価': 'acquisition',
-            '現在値': 'price',
+            '取得単価': 'acquisition_USD',
+            '現在値': 'price_USD',
         })
         df2 = df2.reset_index()
         del df2["index"]
         
-        self.df_foreign = df1.join(df2)
+        df = df1.join(df2)
+        df = df.apply(pd.to_numeric, errors="ignore")
+        df["valuation_USD"] = df.amount * df.price_USD
+        df["valuation"] = self.USDJPY * df["valuation_USD"]
+        self.df_foreign = df
 
     def __update_currency(self):
         res = self.soup_domestic.find_all(text="買付余力")[0]
@@ -154,4 +161,12 @@ class SBIHandler(InvestmentTrustSiteHandler):
         df = df.reset_index()
         del df["index"]
         
+        df = df.apply(pd.to_numeric, errors="ignore")
+        df["valuation"] = df.price * df.amount
         self.df_currency = df
+
+    @property
+    def USDJPY(self):
+        res = self.df_currency.query("ticker == 'USD'")
+        USDJPY, = res.price
+        return USDJPY
