@@ -17,6 +17,19 @@ handler.df_currency
 > DataFrame for Currency
 ```
 
+### Monex
+For Monex
+```
+Monex = MonexHandler()
+Monex.update()
+Monex.close()
+
+Monex.df_currency
+> DataFrame for Foreign Stock
+Monex.df_foreign
+> DataFrame for Currency
+```
+
 ### bitFlyer
 For bitFlyer
 Before you run this code, you have to acquire `api_key` and `api_secret` from [bitFlyer Lightning API](https://lightning.bitflyer.com/docs?lang=ja&_gl=1*t1rrjv*_ga*NzU1MzkzODkzLjE2NDg3OTU3MTg.*_ga_3VYMQNCVSM*MTY0OTc1Njc5OC40LjEuMTY0OTc1ODI0OS41MA..).
@@ -25,6 +38,7 @@ Check `資産残高を取得` and `証拠金の状態を取得` in allowance pag
 bitFlyer = bitFlyerHandler()
 bitFlyer.update(api_key, api_secret)
 bitFlyer.close()
+
 bitFlyer.df
 > DataFrame for All
 ```
@@ -49,11 +63,11 @@ handler = SBIHandler(options)
 ```
 
 ## Expected User
-* [x] SBI証券.
-* [ ] マネックス証券.
-* [ ] 楽天証券.
-* [x] bitFlyer.
-* [ ] Coincheck.
+* [x] SBI証券 (国内株、米国株)
+* [x] マネックス証券 (米国株)
+* [ ] 楽天証券
+* [x] bitFlyer
+* [ ] Coincheck
 
 ## File IO
 Handle numbers with currency units.
