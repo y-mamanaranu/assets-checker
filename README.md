@@ -49,11 +49,11 @@ handler = SBIHandler(options)
 ```
 
 ## Expected User
-* SBI証券.
-* マネックス証券.
-* 楽天証券.
-* bitFlyer.
-* Coincheck.
+* [x] SBI証券.
+* [ ] マネックス証券.
+* [ ] 楽天証券.
+* [x] bitFlyer.
+* [ ]Coincheck.
 
 ## File IO
 Handle numbers with currency units.
