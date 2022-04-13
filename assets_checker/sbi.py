@@ -108,8 +108,8 @@ class SBIHandler(InvestmentTrustSiteHandler):
         df1 = df[0::2]["保有数量"].copy()
         df1 = df1.str.split('\xa0', expand=True)
         df1 = df1.rename(columns={
-            0: 'name', 
-            1: 'ticker'
+            0: 'ticker', 
+            1: 'name'
         })
         df1 = df1.reset_index()
         del df1["index"]
@@ -169,3 +169,7 @@ class SBIHandler(InvestmentTrustSiteHandler):
         res = self.df_currency.query("ticker == 'USD'")
         USDJPY, = res.price
         return USDJPY
+
+    @property
+    def df(self):
+        return pd.concat([self.df_currency, self.df_domestic, self.df_foreign])
