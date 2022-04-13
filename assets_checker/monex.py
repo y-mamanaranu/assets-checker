@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 import time
 import numpy as np
+from io import StringIO
 
 from .handler import InvestmentTrustSiteHandler
 
@@ -17,6 +18,24 @@ class MonexHandler(InvestmentTrustSiteHandler):
     __url_login = "https://www.monex.co.jp/"
     __url_foreign = "https://mxp1.monex.co.jp/pc/servlet/ITS/asset/AmountListForeign?attrSrcKey=bd3b399ac43efca011"
     __url_currency = "https://mxp1.monex.co.jp/pc/servlet/ITS/asset/AmountListSummary?attrSrcKey=68cd51bccc47140582"
+    __currency_csv="""
+name,ticker
+米ドル,USD
+ユーロ,EUR
+豪ドル,AUD
+NZドル,NZD
+カナダドル,CAD
+南アランド,ZAR
+メキシコペソ,MXN
+香港ドル,HKD
+トルコリラ,TRY
+ロシアルーブル,RUB
+シンガポールドル,SGD
+タイバーツ,THB
+マレーシアリンギット,MYR
+人民元,CNY
+円,JPY
+"""
     
     def __init__(self, options:Options=None):
         options = options or Options()
@@ -66,7 +85,11 @@ class MonexHandler(InvestmentTrustSiteHandler):
         df = df[["ticker", "name", "amount", "acquisition", "price_USD", "valuation"]].copy()
         df = df.apply(pd.to_numeric, errors="ignore")
         df["valuation_USD"] = df.amount * df.price_USD
+        df.valuation = df.valuation.str.replace(";", "")
+        df.valuation = df.valuation.str.replace(",", "")
+        df.valuation = df.valuation.astype(float)
         self.df_foreign = df
+
         
     def update_currency(self):
         res = self.soup_currency.find(text="お預り金・MRF残高")
@@ -82,9 +105,9 @@ class MonexHandler(InvestmentTrustSiteHandler):
         df2, = pd.read_html(str(res))
         df2 = df2.rename(columns={0: "name", 1: "valuation"})
 
-        df_ammount = pd.concat([df1, df2])
-        df_ammount = df_ammount.reset_index()
-        del df_ammount["index"]
+        df_amount = pd.concat([df1, df2])
+        df_amount = df_amount.reset_index()
+        del df_amount["index"]
 
         res = self.soup_currency.find(text="為替レート（基準日）")
         res = res.find_parent("table")
@@ -105,9 +128,17 @@ class MonexHandler(InvestmentTrustSiteHandler):
         df_price = df_price.reset_index()
         del df_price["index"]
 
-        df = pd.merge(df_price, df_ammount)
+        df = pd.merge(df_price, df_amount)
         df = df.apply(pd.to_numeric, errors="ignore")
-        df["ammount"] = df.valuation / df.price
+        df["amount"] = df.valuation / df.price
         df.iloc[0, -1] = df.iloc[0, -1].astype(int)
         df.iloc[1, -1] = np.round(df.iloc[1, -1],decimals=2)
+
+        if "ticker" not in df.columns:
+            df_currency = pd.read_csv(StringIO(self.__currency_csv))
+            df = pd.merge(df, df_currency) 
         self.df_currency = df
+
+    @property
+    def df(self):
+        return pd.concat([self.df_currency, self.df_foreign])
