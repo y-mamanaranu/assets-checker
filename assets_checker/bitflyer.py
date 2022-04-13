@@ -25,8 +25,8 @@ class bitFlyerHandler(InvestmentTrustSiteHandler):
         balances = api.getbalance()
         
         df1 = pd.DataFrame(balances)
-        df1 = df1.rename(columns={"currency_code":"tikcer"})
-        df1 = df1[["tikcer", "amount"]]
+        df1 = df1.rename(columns={"currency_code":"ticker"})
+        df1 = df1[["ticker", "amount"]]
         
         self.browser.get(self.__url_home)
         html = self.browser.page_source
@@ -36,9 +36,9 @@ class bitFlyerHandler(InvestmentTrustSiteHandler):
         res = res.findChildren("table")[0]
         
         df2, = pd.read_html(str(res))
-        df2 = df2.rename(columns={"Unnamed: 0": "tikcer", "価格": "price"})
+        df2 = df2.rename(columns={"Unnamed: 0": "ticker", "価格": "price"})
         df2 = df2.iloc[1: , :]
-        df2 = df2[["tikcer", "price"]].copy()
+        df2 = df2[["ticker", "price"]].copy()
         df2.iloc[0,1] = 1
 
         df = df1.merge(df2)
